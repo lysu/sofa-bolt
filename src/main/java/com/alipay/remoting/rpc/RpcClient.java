@@ -46,7 +46,7 @@ import com.alipay.remoting.util.GlobalSwitch;
 
 /**
  * Client for Rpc.
- * 
+ *
  * @author jiangping
  * @version $Id: RpcClient.java, v 0.1 2015-9-23 PM4:03:28 tao Exp $
  */
@@ -60,7 +60,7 @@ public class RpcClient {
     private GlobalSwitch              globalSwitch             = new GlobalSwitch();
 
     /** connection factory */
-    private ConnectionFactory         connctionFactory         = new RpcConnectionFactory();
+    private ConnectionFactory         connectionFactory        = new RpcConnectionFactory();
 
     /** connection event handler */
     private ConnectionEventHandler    connectionEventHandler   = new RpcConnectionEventHandler(
@@ -80,12 +80,7 @@ public class RpcClient {
                                                                    globalSwitch);
 
     /** connection manager */
-    private DefaultConnectionManager  connectionManager        = new DefaultConnectionManager(
-                                                                   connectionSelectStrategy,
-                                                                   connctionFactory,
-                                                                   connectionEventHandler,
-                                                                   connectionEventListener,
-                                                                   globalSwitch);
+    private DefaultConnectionManager  connectionManager;
 
     /** rpc remoting */
     protected RpcRemoting             rpcRemoting;
@@ -103,6 +98,8 @@ public class RpcClient {
      * Initialization.
      */
     public void init() {
+        initConnectionManager();
+
         if (this.addressParser == null) {
             this.addressParser = new RpcAddressParser();
         }
@@ -131,6 +128,14 @@ public class RpcClient {
         }
     }
 
+    private void initConnectionManager() {
+        if (this.connectionManager != null) {
+            return;
+        }
+        this.connectionManager = new DefaultConnectionManager(connectionSelectStrategy,
+            connectionFactory, connectionEventHandler, connectionEventListener, globalSwitch);
+    }
+
     /**
      * Shutdown.
      * <p>
@@ -139,7 +144,9 @@ public class RpcClient {
      *   <li>If you need, you should destroy it, and instantiate another one.
      */
     public void shutdown() {
-        this.connectionManager.removeAll();
+        if (this.connectionManager != null) {
+            this.connectionManager.removeAll();
+        }
         logger.warn("Close all connections from client side!");
         this.taskScanner.shutdown();
         logger.warn("Rpc client shutdown!");
@@ -165,7 +172,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(String addr)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param addr
      * @param request
      * @throws RemotingException
@@ -205,7 +212,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(Url url)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param url
      * @param request
      * @throws RemotingException
@@ -236,7 +243,7 @@ public class RpcClient {
      * <p>
      * Notice:<br>
      *   <b>DO NOT modify the request object concurrently when this method is called.</b>
-     * 
+     *
      * @param conn
      * @param request
      * @throws RemotingException
@@ -272,7 +279,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(String addr)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param addr
      * @param request
      * @param timeoutMillis
@@ -318,7 +325,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(Url url)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param url
      * @param request
      * @param timeoutMillis
@@ -355,7 +362,7 @@ public class RpcClient {
      * <p>
      * Notice:<br>
      *   <b>DO NOT modify the request object concurrently when this method is called.</b>
-     * 
+     *
      * @param conn
      * @param request
      * @param timeoutMillis
@@ -402,7 +409,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(String addr)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param addr
      * @param request
      * @param timeoutMillis
@@ -449,7 +456,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(Url url)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param url
      * @param request
      * @param timeoutMillis
@@ -487,7 +494,7 @@ public class RpcClient {
      * <p>
      * Notice:<br>
      *   <b>DO NOT modify the request object concurrently when this method is called.</b>
-     * 
+     *
      * @param conn
      * @param request
      * @param timeoutMillis
@@ -530,7 +537,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(String addr)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param addr
      * @param request
      * @param invokeCallback
@@ -580,7 +587,7 @@ public class RpcClient {
      *      </ul>
      *   <li>You should use {@link #closeConnection(Url url)} to close it if you want.
      *   </ol>
-     * 
+     *
      * @param url
      * @param request
      * @param invokeCallback
@@ -621,7 +628,7 @@ public class RpcClient {
      * <p>
      * Notice:<br>
      *   <b>DO NOT modify the request object concurrently when this method is called.</b>
-     * 
+     *
      * @param conn
      * @param request
      * @param invokeCallback
@@ -654,7 +661,7 @@ public class RpcClient {
 
     /**
      * Add processor to process connection event.
-     * 
+     *
      * @param type
      * @param processor
      */
@@ -665,11 +672,12 @@ public class RpcClient {
 
     /**
      * Register user processor for client side.
-     * 
+     *
      * @param processor
-     * @throws RemotingException 
+     * @throws RemotingException
      */
     public void registerUserProcessor(UserProcessor<?> processor) {
+        initConnectionManager();
         this.connectionManager.getConnectionFactory().registerUserProcessor(processor);
     }
 
@@ -680,7 +688,7 @@ public class RpcClient {
      *   <li>Each time you call this method, will create a new connection.
      *   <li>Bolt will not control this connection.
      *   <li>You should use {@link #closeStandaloneConnection} to close it.
-     * 
+     *
      * @param ip
      * @param port
      * @param connectTimeout
@@ -701,7 +709,7 @@ public class RpcClient {
      *   <li>Bolt will not control this connection.
      *   <li>You should use {@link #closeStandaloneConnection} to close it.
      *   </ol>
-     * 
+     *
      * @param addr
      * @param connectTimeout
      * @return
@@ -714,7 +722,7 @@ public class RpcClient {
 
     /**
      * Close a standalone connection
-     * 
+     *
      * @param conn
      */
     public void closeStandaloneConnection(Connection conn) {
@@ -757,7 +765,7 @@ public class RpcClient {
      *   <li>Bolt will control this connection in {@link com.alipay.remoting.ConnectionPool}
      *   <li>You should use {@link #closeConnection(Url url)} to close it.
      *   </ol>
-     * 
+     *
      * @param url
      * @param connectTimeout this is prior to url args {@link RpcConfigs#CONNECT_TIMEOUT_KEY}
      * @return
@@ -798,7 +806,7 @@ public class RpcClient {
 
     /**
      * Close all connections of a address
-     * 
+     *
      * @param addr
      */
     public void closeConnection(String addr) {
@@ -808,7 +816,7 @@ public class RpcClient {
 
     /**
      * Close all connections of a {@link Url}
-     * 
+     *
      * @param url
      */
     public void closeConnection(Url url) {
@@ -820,7 +828,7 @@ public class RpcClient {
      * If this address not connected, then do nothing.
      * <p>
      * Notice: this method takes no effect on a stand alone connection.
-     * 
+     *
      * @param addr
      */
     public void enableConnHeartbeat(String addr) {
@@ -833,7 +841,7 @@ public class RpcClient {
      * If this {@link Url} not connected, then do nothing.
      * <p>
      * Notice: this method takes no effect on a stand alone connection.
-     * 
+     *
      * @param url
      */
     public void enableConnHeartbeat(Url url) {
@@ -847,7 +855,7 @@ public class RpcClient {
      * If this addr not connected, then do nothing.
      * <p>
      * Notice: this method takes no effect on a stand alone connection.
-     * 
+     *
      * @param addr
      */
     public void disableConnHeartbeat(String addr) {
@@ -860,7 +868,7 @@ public class RpcClient {
      * If this {@link Url} not connected, then do nothing.
      * <p>
      * Notice: this method takes no effect on a stand alone connection.
-     * 
+     *
      * @param url
      */
     public void disableConnHeartbeat(Url url) {
@@ -909,7 +917,7 @@ public class RpcClient {
 
     /**
      * Getter method for property <tt>addressParser</tt>.
-     * 
+     *
      * @return property value of addressParser
      */
     public RemotingAddressParser getAddressParser() {
@@ -918,7 +926,7 @@ public class RpcClient {
 
     /**
      * Setter method for property <tt>addressParser</tt>.
-     * 
+     *
      * @param addressParser value to be assigned to property addressParser
      */
     public void setAddressParser(RemotingAddressParser addressParser) {
@@ -932,5 +940,23 @@ public class RpcClient {
      */
     public void setMonitorStrategy(ConnectionMonitorStrategy monitorStrategy) {
         this.monitorStrategy = monitorStrategy;
+    }
+
+    /**
+     * Setter method for property <tt>connectionFactory<tt>.
+     *
+     * @param connectionFactory value to be assigned to property connectionFactory
+     */
+    public void setConnectionFactory(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
+    }
+
+    /**
+     * Setter method for property <tt>connectionSelectStrategy<tt>.
+     *
+     * @param connectionSelectStrategy value to be assigned to property connectionSelectStrategy
+     */
+    public void setConnectionSelectStrategy(ConnectionSelectStrategy connectionSelectStrategy) {
+        this.connectionSelectStrategy = connectionSelectStrategy;
     }
 }

@@ -64,17 +64,27 @@ public class RpcConnectionFactory implements ConnectionFactory {
     private static final Logger                         logger         = BoltLoggerFactory
                                                                            .getLogger("RpcRemoting");
 
-    private static final EventLoopGroup                 workerGroup    = new NioEventLoopGroup(
-                                                                           Runtime
-                                                                               .getRuntime()
-                                                                               .availableProcessors() + 1,
-                                                                           new NamedThreadFactory(
-                                                                               "Rpc-netty-client-worker"));
+    private final EventLoopGroup                        workerGroup;
 
     private Bootstrap                                   bootstrap;
 
     private ConcurrentHashMap<String, UserProcessor<?>> userProcessors = new ConcurrentHashMap<String, UserProcessor<?>>(
                                                                            4);
+
+    /**
+     * Default constructor.
+     */
+    public RpcConnectionFactory() {
+        this(new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() + 1,
+            new NamedThreadFactory("Rpc-netty-client-worker")));
+    }
+
+    /**
+     * Constructor with workerGroup
+     */
+    public RpcConnectionFactory(EventLoopGroup workerGroup) {
+        this.workerGroup = workerGroup;
+    }
 
     /**
      * @see com.alipay.remoting.ConnectionFactory#init(ConnectionEventHandler)
